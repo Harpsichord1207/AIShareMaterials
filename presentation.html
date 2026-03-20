@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Presentation</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide-container {
+            width: 100%;
+            height: 100vh;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .slide-header {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .slide-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .slide-counter {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 24px 40px;
+            overflow-y: auto;
+            background: #fafbfc;
+        }
+
+        .markdown-content {
+            max-width: 100%;
+            margin: 0 auto;
+            line-height: 1.8;
+            font-size: 17px;
+            color: #2c3e50;
+        }
+
+        .markdown-content h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #1a1a2e;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .markdown-content h2 {
+            font-size: 24px;
+            margin-top: 28px;
+            margin-bottom: 14px;
+            color: #2c3e50;
+        }
+
+        .markdown-content h3 {
+            font-size: 20px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #34495e;
+        }
+
+        .markdown-content p {
+            margin-bottom: 16px;
+        }
+
+        .markdown-content code {
+            background: #f4f4f4;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 16px;
+            color: #e74c3c;
+        }
+
+        .markdown-content pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 16px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+
+        .markdown-content pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+        }
+
+        .markdown-content ul, .markdown-content ol {
+            margin: 16px 0;
+            padding-left: 32px;
+        }
+
+        .markdown-content li {
+            margin-bottom: 8px;
+        }
+
+        .markdown-content blockquote {
+            border-left: 4px solid #667eea;
+            padding-left: 20px;
+            margin: 20px 0;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .button-area {
+            padding: 10px 20px;
+            background: #ffffff;
+            border-top: 1px solid #e1e4e8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .execute-btn {
+            padding: 8px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .execute-btn.prompt-btn {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .execute-btn.result-btn {
+            background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .execute-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .execute-btn:active {
+            transform: translateY(0);
+        }
+
+        .execute-btn.active {
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.5);
+        }
+
+        .nav-btn {
+            padding: 8px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #667eea;
+            background: transparent;
+            color: #667eea;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .divider {
+            width: 1px;
+            height: 24px;
+            background: #e1e4e8;
+        }
+
+        .loading {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 18px;
+            padding: 40px;
+        }
+
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .mode-indicator {
+            position: fixed;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            z-index: 1000;
+        }
+
+        .mode-indicator.server-mode {
+            background: rgba(17, 153, 142, 0.9);
+        }
+
+        .mode-indicator.inline-mode {
+            background: rgba(231, 76, 60, 0.9);
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="slide-header">
+            <div class="slide-title" id="slideTitle">Architecture Analysis & Updates</div>
+            <div class="slide-counter">Page <span id="currentPage">1</span> / 3</div>
+        </div>
+        <div class="content-area">
+            <div id="markdownContent" class="markdown-content">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+        <div class="button-area">
+            <button class="nav-btn" id="prevBtn" onclick="prevSlide()">← Prev</button>
+            <div class="divider"></div>
+            <button class="execute-btn prompt-btn active" id="promptBtn" onclick="showPrompt()">Prompt</button>
+            <button class="execute-btn result-btn" id="resultBtn" onclick="showResult()">Result</button>
+            <div class="divider"></div>
+            <button class="nav-btn" id="nextBtn" onclick="nextSlide()">Next →</button>
+        </div>
+    </div>
+
+    <div id="modeIndicator" class="mode-indicator">Loading...</div>
+
+    <script>
+        // Page titles for each slide
+        const PAGE_TITLES = {
+            1: 'Architecture Analysis & Updates',
+            2: 'Business Code Generation',
+            3: 'Development Summary'
+        };
+
+        // ============================================
+        // INLINE MARKDOWN CONTENT (edit these directly)
+        // ============================================
+        const INLINE_CONTENT = {
+            '1_prompt': `# Prompt 1: Code Review Request
+
+## Task Description
+
+Please review the following Python code and provide feedback on:
+
+1. **Code Quality** - Readability, naming conventions, structure
+2. **Performance** - Any potential bottlenecks or optimizations
+3. **Security** - Potential vulnerabilities or security issues
+4. **Best Practices** - Adherence to Python best practices
+
+## Code to Review
+
+\`\`\`python
+def process_data(data):
+    result = []
+    for i in range(len(data)):
+        if data[i] != None:
+            if type(data[i]) == str:
+                result.append(data[i].upper())
+            else:
+                result.append(data[i])
+    return result
+\`\`\`
+
+## Expected Output Format
+
+Please structure your review as:
+
+- **Issues Found**: List of problems with severity
+- **Recommendations**: Specific improvements
+- **Refactored Code**: Improved version of the code`,
+            '1_result': `# Code Review Result
+
+## Issues Found
+
+### High Severity
+- ❌ Using \`type(x) == str\` instead of \`isinstance(x, str)\` - breaks with subclassing
+- ❌ Comparing to \`None\` with \`!=\` instead of \`is not\` - style violation
+
+### Medium Severity
+- ⚠️ Using \`range(len())\` instead of direct iteration - unpythonic
+- ⚠️ No type hints - reduces code clarity and IDE support
+
+## Refactored Code
+
+\`\`\`python
+from typing import List, Union, Optional
+
+def process_data(data: List[Optional[Union[str, int, float]]]) -> List[Union[str, int, float]]:
+    return [
+        item.upper() if isinstance(item, str) else item
+        for item in data
+        if item is not None
+    ]
+\`\`\``,
+            '2_prompt': `# Prompt 2: API Design Task
+
+## Objective
+
+Design a RESTful API for a **Task Management System**.
+
+### Features Required
+
+1. **User Management** - Registration, Authentication (JWT), Profile
+2. **Task Operations** - CRUD, Assign, Priorities, Due dates
+3. **Task Organization** - Categories/Tags, Search, Filter, Sort
+
+### Deliverables
+
+1. API Endpoint Design
+2. Request/Response Schemas
+3. Authentication Flow
+4. Error Handling Format`,
+            '2_result': `# API Design: Task Management System
+
+## Base URL
+\`\`\`
+https://api.taskmanager.com/v1
+\`\`\`
+
+## Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /auth/register | Register new user |
+| POST | /auth/login | Login and get JWT |
+| GET | /tasks | List all tasks |
+| POST | /tasks | Create new task |
+| GET | /tasks/:id | Get task details |
+| PATCH | /tasks/:id | Update task |
+| DELETE | /tasks/:id | Delete task |
+
+## Error Response Format
+\`\`\`json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid input data"
+  }
+}
+\`\`\``,
+            '3_prompt': `# Prompt 3: System Architecture Question
+
+## Scenario
+
+Design a **real-time collaborative document editing system**.
+
+## Requirements
+
+1. **Real-time Collaboration**
+   - Multiple users editing simultaneously
+   - Changes visible instantly
+   - Cursor positions visible
+
+2. **Data Consistency**
+   - No data loss during concurrent edits
+   - Conflict resolution
+   - Offline support with sync
+
+3. **Scalability**
+   - Large documents (1000+ pages)
+   - Many concurrent users
+   - Low latency globally
+
+## Questions
+
+1. Conflict resolution algorithm? (OT vs CRDT)
+2. Backend services architecture?
+3. Offline editing and sync strategy?
+4. Database technology choice?
+5. Global low latency strategy?`,
+            '3_result': `# Real-time Collaborative Editor Architecture
+
+## 1. Conflict Resolution: CRDT
+
+**Recommendation**: Use **Yjs CRDT** library.
+
+| Criterion | CRDT | OT |
+|-----------|------|-----|
+| Server dependency | ❌ Serverless possible | ✅ Required |
+| Offline support | ✅ Excellent | ⚠️ Complex |
+| Scalability | ✅ Highly scalable | ⚠️ Bottleneck |
+
+## 2. Backend Architecture
+
+\`\`\`
+Load Balancer
+    │
+    ├── API Gateway
+    ├── WebSocket Cluster
+    ├── Document Service
+    └── Auth Service
+\`\`\`
+
+## 3. Database Stack
+
+| Use Case | Technology |
+|----------|------------|
+| Document Storage | PostgreSQL + JSONB |
+| Real-time State | Redis |
+| Binary CRDT State | S3 / MinIO |
+
+## 4. Global Latency
+
+- Edge WebSocket servers per region
+- Redis Pub/Sub for cross-region sync
+- Binary protocol (protobuf)
+- Delta compression`
+        };
+
+        let currentSlide = 1;
+        let currentView = 'prompt'; // 'prompt' or 'result'
+        let useInlineMode = false;
+
+        async function loadMarkdown(type) {
+            const filename = `${currentSlide}_${type}.md`;
+            const contentDiv = document.getElementById('markdownContent');
+            
+            // If already in inline mode, use inline content directly
+            if (useInlineMode) {
+                const key = `${currentSlide}_${type}`;
+                const text = INLINE_CONTENT[key] || `# Content not found\n\nKey: ${key}`;
+                contentDiv.innerHTML = marked.parse(text);
+                return;
+            }
+            
+            try {
+                const response = await fetch(filename);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                const text = await response.text();
+                contentDiv.innerHTML = marked.parse(text);
+                updateModeIndicator(false);
+            } catch (error) {
+                // Fallback to inline mode (file:// protocol blocks fetch)
+                useInlineMode = true;
+                console.log('Fetch failed, switching to inline mode');
+                const key = `${currentSlide}_${type}`;
+                const text = INLINE_CONTENT[key] || `# Content not found\n\nKey: ${key}`;
+                contentDiv.innerHTML = marked.parse(text);
+                updateModeIndicator(true);
+            }
+        }
+
+        function updateModeIndicator(isInline) {
+            const indicator = document.getElementById('modeIndicator');
+            if (isInline) {
+                indicator.className = 'mode-indicator inline-mode';
+                indicator.textContent = '📄 Inline Mode (edit INLINE_CONTENT in HTML)';
+            } else {
+                indicator.className = 'mode-indicator server-mode';
+                indicator.textContent = '🌐 Server Mode (loading from .md files)';
+            }
+        }
+
+        function showPrompt() {
+            currentView = 'prompt';
+            updateButtonStyles();
+            loadMarkdown('prompt');
+        }
+
+        function showResult() {
+            currentView = 'result';
+            updateButtonStyles();
+            loadMarkdown('result');
+        }
+
+        function updateButtonStyles() {
+            const promptBtn = document.getElementById('promptBtn');
+            const resultBtn = document.getElementById('resultBtn');
+            
+            if (currentView === 'prompt') {
+                promptBtn.classList.add('active');
+                resultBtn.classList.remove('active');
+            } else {
+                promptBtn.classList.remove('active');
+                resultBtn.classList.add('active');
+            }
+        }
+
+        function updateSlide() {
+            document.getElementById('currentPage').textContent = currentSlide;
+            document.getElementById('slideTitle').textContent = PAGE_TITLES[currentSlide];
+            document.getElementById('prevBtn').disabled = currentSlide === 1;
+            document.getElementById('nextBtn').disabled = currentSlide === 3;
+            
+            // Reset to prompt view when changing slides
+            currentView = 'prompt';
+            updateButtonStyles();
+            loadMarkdown('prompt');
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        function nextSlide() {
+            if (currentSlide < 3) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                prevSlide();
+            } else if (e.key === 'ArrowRight') {
+                nextSlide();
+            } else if (e.key === 'p' || e.key === 'P') {
+                showPrompt();
+            } else if (e.key === 'r' || e.key === 'R') {
+                showResult();
+            }
+        });
+
+        // Initialize
+        updateSlide();
+    </script>
+</body>
+</html>
