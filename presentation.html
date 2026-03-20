@@ -273,62 +273,142 @@
         // INLINE MARKDOWN CONTENT (edit these directly)
         // ============================================
         const INLINE_CONTENT = {
-            '1_prompt': `# Prompt 1: Code Review Request
+            '1_prompt': `# 架构文档生成指南
 
-## Task Description
+## 第一部分：使用场景
 
-Please review the following Python code and provide feedback on:
+以下两种场景适合使用 AI 辅助生成或更新架构文档：
 
-1. **Code Quality** - Readability, naming conventions, structure
-2. **Performance** - Any potential bottlenecks or optimizations
-3. **Security** - Potential vulnerabilities or security issues
-4. **Best Practices** - Adherence to Python best practices
+### 1. 从零创建架构文档
 
-## Code to Review
+项目当前没有任何架构文档，需要基于现有代码库从零开始补充：
 
-\`\`\`python
-def process_data(data):
-    result = []
-    for i in range(len(data)):
-        if data[i] != None:
-            if type(data[i]) == str:
-                result.append(data[i].upper())
-            else:
-                result.append(data[i])
-    return result
+- 新接手的项目缺少文档传承
+- 快速迭代期未及时记录架构设计
+- 需要为团队建立统一的架构认知基线
+
+此时应使用**第二部分**的提示词，让 AI 分析代码库并生成完整的架构文档。
+
+### 2. 更新现有架构文档
+
+项目已有架构文档，但存在以下问题：
+
+- 文档内容过于笼统，缺少关键细节
+- 随着项目持续开发，文档已落后于实际代码
+- 新增模块或重构后文档未同步更新
+
+此时应使用**第三部分**的提示词，让 AI 对比现有文档与当前代码，生成更新后的版本。
+
+---
+
+## 第二部分：从零生成架构文档（无现有文档）
+
+\`\`\`
+你是一位资深软件架构师。请分析以下后端代码库，生成完整的架构文档。
+
+## 任务要求
+
+1. **项目概述** - 识别项目类型、业务领域、技术栈
+2. **目录结构分析** - 映射文件夹层级和用途
+3. **模块与组件架构** - 识别核心模块和依赖关系
+4. **数据层** - 数据库、ORM、实体、关系
+5. **API 层** - 端点、认证机制、中间件
+6. **外部集成** - 外部 API、消息队列、缓存
+7. **配置与环境** - 环境变量、配置文件、密钥管理
+
+## 输出格式
+生成 Markdown 文档，包含：概述、技术栈、目录结构、核心模块、数据架构、API 参考、外部依赖、配置说明、部署考量。
 \`\`\`
 
-## Expected Output Format
+---
 
-Please structure your review as:
+## 第三部分：更新现有架构文档
 
-- **Issues Found**: List of problems with severity
-- **Recommendations**: Specific improvements
-- **Refactored Code**: Improved version of the code`,
-            '1_result': `# Code Review Result
+\`\`\`
+你是一位资深软件架构师。分析后端代码库，并更新现有架构文档。
 
-## Issues Found
+## 现有文档
+[在此粘贴现有文档]
 
-### High Severity
-- ❌ Using \`type(x) == str\` instead of \`isinstance(x, str)\` - breaks with subclassing
-- ❌ Comparing to \`None\` with \`!=\` instead of \`is not\` - style violation
+## 任务要求
+1. **识别变更** - 新增/移除/修改的组件
+2. **更新各章节** - 标记为 ✅/⚠️/❌ 并更新
+3. **保持一致性** - 保留结构和术语
+4. **标记破坏性变更** - 明确说明影响和迁移路径
 
-### Medium Severity
-- ⚠️ Using \`range(len())\` instead of direct iteration - unpythonic
-- ⚠️ No type hints - reduces code clarity and IDE support
+## 输出格式
+包含变更日志摘要表格和完整更新后的文档。
+\`\`\`
 
-## Refactored Code
+---
 
-\`\`\`python
-from typing import List, Union, Optional
+## 最佳实践
 
-def process_data(data: List[Optional[Union[str, int, float]]]) -> List[Union[str, int, float]]:
-    return [
-        item.upper() if isinstance(item, str) else item
-        for item in data
-        if item is not None
-    ]
-\`\`\``,
+1. **提供足够的上下文**：包含相关的代码文件或文件路径
+2. **迭代优化**：先进行广泛分析，再深入具体领域
+3. **验证输出**：对照实际代码审查 AI 生成的文档
+4. **持续维护**：将定期文档更新纳入开发周期`,
+            '1_result': `# 架构文档示例输出
+
+> 这是 AI 分析后端代码库后生成的示例输出。
+
+---
+
+# 电商 API 架构文档
+
+## 1. 概述
+
+| 属性 | 值 |
+|------|-----|
+| 项目类型 | REST API（单体应用） |
+| 业务领域 | 电商平台 |
+| 主要语言 | TypeScript |
+| 框架 | NestJS |
+
+## 2. 技术栈
+
+- **运行时**：Node.js 18+
+- **框架**：NestJS 10.x
+- **ORM**：TypeORM 0.3.x
+- **数据库**：PostgreSQL 15, Redis 7
+
+## 3. Directory Structure
+
+\`\`\`
+src/
+├── modules/           # Feature modules
+│   ├── auth/          # Authentication
+│   ├── users/         # User management
+│   ├── products/      # Product catalog
+│   └── orders/        # Order processing
+├── common/            # Shared utilities
+├── config/            # Configuration
+└── main.ts            # Entry point
+\`\`\`
+
+## 4. Core Modules
+
+| Module | Purpose |
+|--------|---------|
+| Auth | JWT authentication, RBAC |
+| Products | CRUD, categories, search |
+| Orders | Order workflow, inventory |
+
+## 5. API Reference
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /auth/login | Authenticate user |
+| GET | /products | List products |
+| POST | /orders | Create order |
+
+## 6. Configuration
+
+| Variable | Description |
+|----------|-------------|
+| DATABASE_URL | PostgreSQL connection |
+| REDIS_URL | Redis connection |
+| JWT_SECRET | Token signing key |`,
             '2_prompt': `# Prompt 2: API Design Task
 
 ## Objective
