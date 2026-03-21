@@ -28,6 +28,12 @@
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
+            transition: width 0.3s ease;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed {
+            width: 48px;
         }
 
         .sidebar-header {
@@ -39,6 +45,55 @@
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .sidebar.collapsed .sidebar-header {
+            justify-content: center;
+        }
+
+        .sidebar.collapsed .sidebar-title span {
+            display: none;
+        }
+
+        .sidebar.collapsed .path-input,
+        .sidebar.collapsed .drives-section,
+        .sidebar.collapsed .file-list {
+            display: none;
+        }
+
+        .sidebar.collapsed .sidebar-title {
+            justify-content: center;
+        }
+
+        .sidebar.collapsed .sidebar-title span {
+            display: none;
+        }
+
+        .sidebar.collapsed .path-input,
+        .sidebar.collapsed .drives-section,
+        .sidebar.collapsed .file-list {
+            display: none;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .toggle-btn:hover {
+            background: #2d2d44;
+            color: white;
         }
 
         .path-input {
@@ -388,7 +443,10 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-title">📂 Markdown 文件浏览器</div>
+            <div class="sidebar-title">
+                <span>📂 Markdown 文件浏览器</span>
+                <button class="toggle-btn" id="toggleSidebar" title="切换侧边栏">◀</button>
+            </div>
             <input type="text" class="path-input" id="pathInput" placeholder="输入目录路径..." />
         </div>
         <div class="drives-section">
@@ -426,6 +484,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadDrives();
             setupEventListeners();
+            initSidebar();
         });
 
         function setupEventListeners() {
@@ -435,6 +494,40 @@
                     browseDirectory(pathInput.value);
                 }
             });
+
+            // 侧边栏折叠切换
+            const toggleBtn = document.getElementById('toggleSidebar');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', toggleSidebar);
+            }
+        }
+
+        function initSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+            }
+            
+            updateToggleButton();
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('collapsed');
+            updateToggleButton();
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+
+        function updateToggleButton() {
+            const toggleBtn = document.getElementById('toggleSidebar');
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar.classList.contains('collapsed')) {
+                toggleBtn.innerHTML = '▶';
+            } else {
+                toggleBtn.innerHTML = '◀';
+            }
         }
 
         async function loadDrives() {
