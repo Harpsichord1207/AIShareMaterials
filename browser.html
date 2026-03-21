@@ -451,11 +451,15 @@
             text-align: center;
             overflow-x: auto;
             max-width: 100%;
+            background: #fafbfc;
+            padding: 20px;
+            border-radius: 8px;
         }
 
         .mermaid svg {
             max-width: 100%;
             height: auto;
+            background: transparent !important;
         }
 
         .mermaid-error {
@@ -700,7 +704,19 @@
                 try {
                     await mermaid.initialize({
                         startOnLoad: false,
-                        theme: 'default',
+                        theme: 'base',
+                        themeVariables: {
+                            background: '#fafbfc',
+                            primaryColor: '#667eea',
+                            primaryTextColor: '#333',
+                            primaryBorderColor: '#667eea',
+                            lineColor: '#666',
+                            secondaryColor: '#f0f4ff',
+                            tertiaryColor: '#fff',
+                            noteBkgColor: '#fff5e6',
+                            noteTextColor: '#333',
+                            noteBorderColor: '#e6a700'
+                        },
                         securityLevel: 'loose',
                         logLevel: 'error',
                     });

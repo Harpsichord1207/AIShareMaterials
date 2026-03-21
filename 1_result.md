@@ -224,50 +224,36 @@ erDiagram
 ### 订单创建流程
 
 ```mermaid
+%%{init: {'theme': 'neutral', 'themeVariables': { 'primaryTextColor': '#333', 'primaryColor': '#667eea', 'noteBkgColor': '#fff5e6', 'noteTextColor': '#333', 'noteBorderColor': '#e6a700'}}}%%
 sequenceDiagram
-    participant C as Client 客户端
-    participant Auth as Auth 认证服务
-    participant Order as Order 订单服务
-    participant Product as Product 商品服务
-    participant Inventory as Inventory 库存服务
-    participant Payment as Payment 支付服务
-    participant DB as Database 数据库
-    participant Stripe as Stripe 支付网关
-    participant SendGrid as SendGrid 邮件服务
+    autonumber
+    participant U as 用户
+    participant A as API服务
+    participant O as 订单系统
+    participant D as 数据库
+    participant P as 支付网关
 
-    Note over C,Order: 1. 用户认证
-    C->>+Auth: POST /auth/login
-    Auth->>+DB: 验证用户凭据
-    DB-->>-Auth: 用户信息
-    Auth-->>-C: JWT Token
+    Note over U,A: 认证阶段
+    U->>A: 登录请求
+    A->>D: 验证用户
+    D-->>A: 用户信息
+    A-->>U: JWT Token
 
-    Note over C,Order: 2. 创建订单
-    C->>+Order: POST /orders {items}
-    Order->>Auth: 验证 JWT
-    Auth-->>Order: 用户ID
-    
-    Order->>+Product: 查询商品价格
-    Product-->>-Order: 商品详情
-    
-    Order->>+Inventory: 检查库存
-    Inventory-->>-Order: 库存充足
-    
-    Order->>+DB: 创建订单记录
-    DB-->>-Order: 订单ID
-    
-    Order->>Inventory: 预留库存
-    Order-->>-C: 订单创建成功
+    Note over U,O: 订单创建
+    U->>A: 创建订单
+    A->>O: 处理订单
+    O->>D: 检查库存
+    D-->>O: 库存充足
+    O->>D: 保存订单
+    O-->>A: 订单ID
+    A-->>U: 订单创建成功
 
-    Note over C,Payment: 3. 支付处理
-    C->>+Payment: POST /payments
-    Payment->>+Stripe: 创建支付
-    Stripe-->>-Payment: 支付成功
-    Payment->>Order: 更新订单状态
-    Payment-->>-C: 支付确认
-
-    Note over Payment,SendGrid: 4. 后续处理
-    Payment->>+SendGrid: 发送确认邮件
-    SendGrid-->>-Payment: 已发送
+    Note over U,P: 支付处理
+    U->>A: 发起支付
+    A->>P: 处理支付
+    P-->>A: 支付成功
+    A->>O: 更新状态
+    A-->>U: 支付完成
 ```
 
 ## 7. 外部依赖
