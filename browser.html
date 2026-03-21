@@ -56,16 +56,6 @@
             justify-content: center;
         }
 
-        .sidebar.collapsed .sidebar-title span {
-            display: none;
-        }
-
-        .sidebar.collapsed .path-input,
-        .sidebar.collapsed .drives-section,
-        .sidebar.collapsed .file-list {
-            display: none;
-        }
-
         .sidebar.collapsed .sidebar-title {
             justify-content: center;
         }
@@ -337,14 +327,31 @@
             margin: 16px 0;
         }
 
-        /* Mermaid code blocks - light background for proper rendering */
+        /* Mermaid diagram styling */
         .markdown-content pre.mermaid,
         .markdown-content pre.mermaid-pre,
         .markdown-content pre:has(code.language-mermaid),
-        .markdown-content pre:has(code[class*="mermaid"]) {
-            background: #fafbfc !important;
+        .markdown-content pre:has(code[class*="mermaid"]),
+        .mermaid {
+            margin: 24px 0;
+            text-align: center;
+            overflow-x: auto;
+            max-width: 100%;
+            background: #fafbfc;
             padding: 20px;
             border-radius: 8px;
+            border: 1px solid #e1e4e8;
+        }
+
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+            background: transparent !important;
+        }
+
+        .mermaid-error {
+            margin: 8px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         .markdown-content pre code {
@@ -453,28 +460,6 @@
 
         .sidebar ::-webkit-scrollbar-thumb {
             background: #4d4d64;
-        }
-
-        /* Mermaid diagram styling */
-        .mermaid {
-            margin: 24px 0;
-            text-align: center;
-            overflow-x: auto;
-            max-width: 100%;
-            background: #fafbfc;
-            padding: 20px;
-            border-radius: 8px;
-        }
-
-        .mermaid svg {
-            max-width: 100%;
-            height: auto;
-            background: transparent !important;
-        }
-
-        .mermaid-error {
-            margin: 8px 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
     </style>
 </head>
