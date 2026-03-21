@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Markdown Presentation</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -235,6 +236,24 @@
 
         .mode-indicator.inline-mode {
             background: rgba(231, 76, 60, 0.9);
+        }
+
+        /* Mermaid diagram styling */
+        .mermaid {
+            margin: 24px 0;
+            text-align: center;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .mermaid-error {
+            margin: 8px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
     </style>
 </head>
@@ -540,6 +559,7 @@ Load Balancer
                 const key = `${currentSlide}_${type}`;
                 const text = INLINE_CONTENT[key] || `# Content not found\n\nKey: ${key}`;
                 contentDiv.innerHTML = marked.parse(text);
+                renderMermaidDiagrams();
                 return;
             }
             
@@ -550,6 +570,7 @@ Load Balancer
                 }
                 const text = await response.text();
                 contentDiv.innerHTML = marked.parse(text);
+                renderMermaidDiagrams();
                 updateModeIndicator(false);
             } catch (error) {
                 // Fallback to inline mode (file:// protocol blocks fetch)
@@ -558,6 +579,7 @@ Load Balancer
                 const key = `${currentSlide}_${type}`;
                 const text = INLINE_CONTENT[key] || `# Content not found\n\nKey: ${key}`;
                 contentDiv.innerHTML = marked.parse(text);
+                renderMermaidDiagrams();
                 updateModeIndicator(true);
             }
         }
@@ -636,6 +658,60 @@ Load Balancer
                 showResult();
             }
         });
+
+        /**
+         * Render all Mermaid diagrams on the page
+         * Call this after marked.js has rendered markdown content
+         */
+        async function renderMermaidDiagrams() {
+            // Check if mermaid is available
+            if (typeof mermaid === 'undefined') {
+                console.warn('Mermaid.js not loaded, skipping diagram rendering');
+                return;
+            }
+            
+            // Initialize mermaid (only once)
+            if (!mermaid._hasInitialized) {
+                try {
+                    await mermaid.initialize({
+                        startOnLoad: false,
+                        theme: 'default',
+                        securityLevel: 'loose',
+                        logLevel: 'error',
+                    });
+                    mermaid._hasInitialized = true;
+                } catch (error) {
+                    console.error('Failed to initialize Mermaid:', error);
+                    return;
+                }
+            }
+            
+            // Find all mermaid code blocks
+            const mermaidBlocks = document.querySelectorAll('.mermaid, .language-mermaid, pre code[class*="mermaid"]');
+            
+            if (mermaidBlocks.length === 0) {
+                return; // No diagrams to render
+            }
+            
+            // Render each diagram
+            try {
+                await mermaid.init(undefined, mermaidBlocks);
+                console.log(`Rendered ${mermaidBlocks.length} Mermaid diagram(s)`);
+            } catch (error) {
+                console.error('Error rendering Mermaid diagrams:', error);
+                // Show fallback: keep code blocks visible with error indicator
+                mermaidBlocks.forEach(block => {
+                    const pre = block.closest('pre');
+                    if (pre) {
+                        const errorMsg = document.createElement('div');
+                        errorMsg.className = 'mermaid-error';
+                        errorMsg.style.cssText = 'color: #e74c3c; padding: 8px; background: #fef5f5; border-radius: 4px; margin-top: 8px; font-size: 12px;';
+                        errorMsg.textContent = '⚠️ Diagram rendering failed - check browser console for details';
+                        pre.parentNode.insertBefore(errorMsg, pre.nextSibling);
+                    }
+                });
+            }
+        }
 
         // Initialize
         updateSlide();

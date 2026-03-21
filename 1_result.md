@@ -53,6 +53,65 @@ src/
 └── main.ts            # 应用入口
 ```
 
+### 模块依赖关系
+
+```mermaid
+graph LR
+    subgraph "核心层 Core Layer"
+        Auth[Auth 认证模块]
+        Users[Users 用户模块]
+        Common[Common 公共模块]
+    end
+
+    subgraph "业务层 Business Layer"
+        Products[Products 商品模块]
+        Orders[Orders 订单模块]
+        Payments[Payments 支付模块]
+        Inventory[Inventory 库存模块]
+    end
+
+    subgraph "基础设施层 Infrastructure"
+        Database[(Database 数据库)]
+        Redis[Redis 缓存]
+        S3[S3 存储]
+    end
+
+    subgraph "外部服务 External Services"
+        Stripe[Stripe 支付]
+        SendGrid[SendGrid 邮件]
+    end
+
+    Auth --> Users
+    Auth --> Common
+    Users --> Common
+    Users --> Auth
+    Products --> Common
+    Products --> Inventory
+    Products --> Auth
+    Orders --> Common
+    Orders --> Auth
+    Orders --> Users
+    Orders --> Products
+    Orders --> Inventory
+    Orders --> Payments
+    Payments --> Common
+    Payments --> Auth
+    Payments --> Stripe
+    Inventory --> Common
+    Common --> Database
+    Common --> Redis
+    Payments --> S3
+    Products --> S3
+    Payments --> SendGrid
+    Orders --> SendGrid
+
+    style Auth fill:#e74c3c,color:#fff
+    style Users fill:#3498db,color:#fff
+    style Products fill:#2ecc71,color:#fff
+    style Orders fill:#f39c12,color:#fff
+    style Common fill:#9b59b6,color:#fff
+```
+
 ## 4. 核心模块
 
 ### 认证模块
@@ -75,14 +134,53 @@ src/
 
 ## 5. 数据架构
 
-### 实体关系
+### 实体关系图
 
-```
-用户 ──< 订单 ──< 订单项 >── 商品
-  │                              │
-  └──< 评价                    └──< 分类
-  │
-  └──< 地址
+```mermaid
+erDiagram
+    User ||--o{ Order : "下单"
+    User ||--o{ Review : "评价"
+    User ||--o{ Address : "拥有"
+    
+    Product ||--o{ OrderItem : "包含于"
+    Product }o--|| Category : "属于"
+    Product ||--o{ Review : "被评价"
+    
+    Order ||--|{ OrderItem : "包含"
+    OrderItem }o--|| Product : "关联商品"
+    
+    User {
+        int id PK
+        string email UK
+        string password_hash
+        enum role
+        enum status
+        datetime created_at
+    }
+    
+    Product {
+        int id PK
+        string name
+        decimal price
+        int stock
+        int category_id FK
+    }
+    
+    Order {
+        int id PK
+        string order_no UK
+        int user_id FK
+        enum status
+        decimal total_amount
+    }
+    
+    OrderItem {
+        int id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        decimal unit_price
+    }
 ```
 
 ### 核心实体
@@ -123,6 +221,55 @@ src/
 | POST | /orders | 创建新订单 |
 | GET | /orders/:id | 订单详情 |
 
+### 订单创建流程
+
+```mermaid
+sequenceDiagram
+    participant C as Client 客户端
+    participant Auth as Auth 认证服务
+    participant Order as Order 订单服务
+    participant Product as Product 商品服务
+    participant Inventory as Inventory 库存服务
+    participant Payment as Payment 支付服务
+    participant DB as Database 数据库
+    participant Stripe as Stripe 支付网关
+    participant SendGrid as SendGrid 邮件服务
+
+    Note over C,Order: 1. 用户认证
+    C->>+Auth: POST /auth/login
+    Auth->>+DB: 验证用户凭据
+    DB-->>-Auth: 用户信息
+    Auth-->>-C: JWT Token
+
+    Note over C,Order: 2. 创建订单
+    C->>+Order: POST /orders {items}
+    Order->>Auth: 验证 JWT
+    Auth-->>Order: 用户ID
+    
+    Order->>+Product: 查询商品价格
+    Product-->>-Order: 商品详情
+    
+    Order->>+Inventory: 检查库存
+    Inventory-->>-Order: 库存充足
+    
+    Order->>+DB: 创建订单记录
+    DB-->>-Order: 订单ID
+    
+    Order->>Inventory: 预留库存
+    Order-->>-C: 订单创建成功
+
+    Note over C,Payment: 3. 支付处理
+    C->>+Payment: POST /payments
+    Payment->>+Stripe: 创建支付
+    Stripe-->>-Payment: 支付成功
+    Payment->>Order: 更新订单状态
+    Payment-->>-C: 支付确认
+
+    Note over Payment,SendGrid: 4. 后续处理
+    Payment->>+SendGrid: 发送确认邮件
+    SendGrid-->>-Payment: 已发送
+```
+
 ## 7. 外部依赖
 
 | 服务 | 用途 | 集成方式 |
@@ -161,3 +308,63 @@ src/
 - 结构化 JSON 日志
 - 错误追踪（推荐 Sentry）
 - 性能指标采集
+
+### 部署架构图
+
+```mermaid
+graph TB
+    subgraph "客户端层"
+        Web[Web Browser<br/>网页浏览器]
+        Mobile[Mobile App<br/>移动应用]
+    end
+
+    subgraph "接入层"
+        LB[Load Balancer<br/>Nginx 负载均衡]
+    end
+
+    subgraph "应用层"
+        App1[API Server 1<br/>NestJS]
+        App2[API Server 2<br/>NestJS]
+        App3[API Server 3<br/>NestJS]
+    end
+
+    subgraph "数据层"
+        DB[(PostgreSQL<br/>主从复制)]
+        Cache[Redis<br/>集群缓存]
+    end
+
+    subgraph "存储层"
+        S3[AWS S3<br/>对象存储]
+    end
+
+    subgraph "外部服务"
+        Stripe[Stripe<br/>支付网关]
+        SendGrid[SendGrid<br/>邮件服务]
+    end
+
+    Web --> LB
+    Mobile --> LB
+    LB --> App1
+    LB --> App2
+    LB --> App3
+    App1 --> DB
+    App2 --> DB
+    App3 --> DB
+    App1 --> Cache
+    App2 --> Cache
+    App3 --> Cache
+    App1 --> S3
+    App2 --> S3
+    App3 --> S3
+    App1 --> Stripe
+    App2 --> Stripe
+    App3 --> Stripe
+    App1 --> SendGrid
+    App2 --> SendGrid
+    App3 --> SendGrid
+
+    style LB fill:#667eea,color:#fff
+    style DB fill:#e74c3c,color:#fff
+    style Cache fill:#f39c12,color:#fff
+    style S3 fill:#3498db,color:#fff
+```
