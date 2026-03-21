@@ -402,8 +402,8 @@
 
     <!-- Main Content -->
     <div class="main-content">
-        <div class="content-header" id="contentHeader" style="display: none;">
-            <div class="current-file" id="currentFile"></div>
+        <div class="content-header" id="contentHeader">
+            <div class="current-file" id="currentFile">未选择文件</div>
             <div class="header-actions">
                 <button class="action-btn" onclick="copyPath()">复制路径</button>
                 <a class="action-btn primary" id="presentationLink" href="presentation.html">切换到演示模式</a>
@@ -527,7 +527,6 @@
                 currentFile = data;
 
                 // Update header
-                document.getElementById('contentHeader').style.display = 'flex';
                 document.getElementById('currentFile').textContent = data.name;
 
                 // Render markdown
@@ -549,6 +548,8 @@
             if (currentFile) {
                 navigator.clipboard.writeText(currentFile.path);
                 alert('路径已复制: ' + currentFile.path);
+            } else {
+                alert('请先选择一个文件');
             }
         }
 
