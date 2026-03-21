@@ -440,10 +440,13 @@
         async function loadDrives() {
             try {
                 const res = await fetch('/api/drives');
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
                 const drives = await res.json();
                 const container = document.getElementById('drivesList');
                 container.innerHTML = drives.map(d => 
-                    `<button class="drive-btn" onclick="browseDirectory('${d.path}')">${d.name}</button>`
+                    `<button class="drive-btn" onclick="browseDirectory('${escapeHtml(d.path)}')">${d.name}</button>`
                 ).join('');
             } catch (e) {
                 console.error('Failed to load drives:', e);
@@ -456,6 +459,9 @@
 
             try {
                 const res = await fetch(`/api/browse?path=${encodeURIComponent(path)}`);
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
                 const data = await res.json();
 
                 renderFileList(data);
@@ -515,6 +521,9 @@
         async function loadFile(path) {
             try {
                 const res = await fetch(`/api/file?path=${encodeURIComponent(path)}`);
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
                 const data = await res.json();
 
                 currentFile = data;
@@ -546,7 +555,7 @@
         }
 
         function escapeHtml(str) {
-            return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+            return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
         }
 
         function formatSize(bytes) {
