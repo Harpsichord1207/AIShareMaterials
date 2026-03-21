@@ -111,6 +111,16 @@
             margin: 16px 0;
         }
 
+        /* Mermaid code blocks - light background for proper rendering */
+        .markdown-content pre.mermaid,
+        .markdown-content pre.mermaid-pre,
+        .markdown-content pre:has(code.language-mermaid),
+        .markdown-content pre:has(code[class*="mermaid"]) {
+            background: #fafbfc !important;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
         .markdown-content pre code {
             background: none;
             color: inherit;
@@ -702,12 +712,20 @@ Load Balancer
                 }
             }
             
-            // Find all mermaid code blocks
+            // Find all mermaid code blocks and prepare their parent pre elements
             const mermaidBlocks = document.querySelectorAll('.mermaid, .language-mermaid, pre code[class*="mermaid"]');
             
             if (mermaidBlocks.length === 0) {
                 return; // No diagrams to render
             }
+            
+            // Pre-process: add class to parent pre elements for styling
+            mermaidBlocks.forEach(block => {
+                const pre = block.closest('pre');
+                if (pre) {
+                    pre.classList.add('mermaid-pre');
+                }
+            });
             
             // Render each diagram
             try {
