@@ -70,22 +70,23 @@ class MarkdownHandler(http.server.SimpleHTTPRequestHandler):
             # Get subdirectories and MD files
             items = []
             for item in sorted(target.iterdir()):
-                if item.is_dir():
-                    # Check if directory has MD files inside
-                    has_md = any(item.glob('**/*.md'))
-                    items.append({
-                        'name': item.name,
-                        'path': str(item),
-                        'type': 'directory',
-                        'has_md': has_md
-                    })
-                elif item.suffix.lower() == '.md':
-                    items.append({
-                        'name': item.name,
-                        'path': str(item),
-                        'type': 'file',
-                        'size': item.stat().st_size
-                    })
+                try:
+                    if item.is_dir():
+                        # Just show all directories, no recursive check
+                        items.append({
+                            'name': item.name,
+                            'path': str(item),
+                            'type': 'directory'
+                        })
+                    elif item.is_file() and item.suffix.lower() == '.md':
+                        items.append({
+                            'name': item.name,
+                            'path': str(item),
+                            'type': 'file',
+                            'size': item.stat().st_size
+                        })
+                except PermissionError:
+                    continue
 
             # Parent directory
             parent = str(target.parent) if target.parent != target else None

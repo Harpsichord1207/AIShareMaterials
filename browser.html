@@ -493,14 +493,12 @@
                 const files = data.items.filter(i => i.type === 'file');
 
                 dirs.forEach(item => {
-                    if (item.has_md) {
-                        html += `
-                            <div class="file-item" onclick="browseDirectory('${escapeHtml(item.path)}')">
-                                <span class="file-icon dir">📁</span>
-                                <span class="file-name">${escapeHtml(item.name)}</span>
-                            </div>
-                        `;
-                    }
+                    html += `
+                        <div class="file-item" onclick="browseDirectory('${escapeHtml(item.path)}')">
+                            <span class="file-icon dir">📁</span>
+                            <span class="file-name">${escapeHtml(item.name)}</span>
+                        </div>
+                    `;
                 });
 
                 files.forEach(item => {
